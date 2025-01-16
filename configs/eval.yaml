@@ -1,0 +1,29 @@
+# ------------------------------------------------Global Paths------------------------------------------------#
+# Paths to models
+model2path:
+  llama: "meta-llama/Llama-3.2-3B-Instruct"
+  qwen: "Qwen/Qwen2.5-3B-Instruct"
+  rbft_llama: "rbft/model/rbft_llama"
+  rbft_qwen: "rbft/model/rbft_qwen"
+
+save_dir: "log/"
+
+
+# -------------------------------------------------Generator Settings------------------------------------------------#
+framework: vllm # inference frame work of LLM, supporting: 'hf','vllm','fschat'
+generator_model: "llama" # name or path of the generator model
+generator_max_input_len: 6144  # max length of the input
+generator_batch_size: 4 # batch size for generation, invalid for vllm
+gpu_memory_utilization: 0.65
+generation_params:
+  do_sample: False
+  max_tokens: 32
+use_fid: False # whether to use FID, only valid in encoder-decoder model
+
+
+metrics: ['em','f1','acc','precision','recall']
+metric_setting:
+  retrieval_recall_topk: 5
+
+
+

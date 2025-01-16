@@ -1,0 +1,13 @@
+### Note: DO NOT use quantized model or quantization_bit when merging lora adapters
+
+### model
+model_name_or_path: meta-llama/Llama-3.2-3B-Instruct
+adapter_name_or_path: output/rbft_llama
+template: llama3
+finetuning_type: lora
+
+### export
+export_dir: model/rbft_llama
+export_size: 2
+export_device: cpu
+export_legacy_format: false

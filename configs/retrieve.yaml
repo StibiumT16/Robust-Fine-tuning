@@ -1,0 +1,46 @@
+# ------------------------------------------------Global Paths------------------------------------------------#
+# Paths to models
+model2path:
+  e5: "intfloat/e5-base-v2"
+  contriever: "facebook/contriever"
+
+# Pooling methods for each embedding model
+model2pooling:
+  e5: "mean"
+  contriever: "mean"
+
+# Indexes path for retrieval models
+method2index:
+  e5: "data/indexes/e5_Flat.index"
+  contriever: "data/indexes/contriever_Flat.index"
+
+# ------------------------------------------------Environment Settings------------------------------------------------#
+# Directory paths for data and outputs
+data_dir: "FlashRAG_datasets"
+save_dir: "log/"
+
+gpu_id: "0,1,2,3"
+dataset_name: "nq" # name of the dataset in data_dir
+split: ["train"]  # dataset split to load (e.g. train,dev,test)
+random_sample: False # whether to randomly sample the test samples
+
+seed: 2024
+
+# Whether save intermediate data
+save_intermediate_data: False
+
+# -------------------------------------------------Retrieval Settings------------------------------------------------#
+# If set the name, the model path will be find in global paths
+retrieval_method: "e5"  # name or path of the retrieval model. 
+index_path: ~ # set automatically if not provided. 
+faiss_gpu: True # whether use gpu to hold index
+corpus_path: "FlashRAG_datasets/retrieval-corpus/wiki18_100w.jsonl"  # path to corpus in '.jsonl' format that store the documents
+
+retrieval_topk: 100 # number of retrieved documents
+retrieval_batch_size: 512  # batch size for retrieval
+retrieval_use_fp16: True  # whether to use fp16 for retrieval model
+retrieval_query_max_length: 128  # max length of the query
+save_retrieval_cache: False # whether to save the retrieval cache
+use_retrieval_cache: False # whether to use the retrieval cache
+retrieval_cache_path: ~ # path to the retrieval cache
+retrieval_pooling_method: ~ # set automatically if not provided
