@@ -1,14 +1,23 @@
 # Robust Fine-tuning (RbFT)
 The code of our paper: *Robust Fine-tuning for Retrieval-Augmented Generation against Retrieval Defects*
 
-### 0. Installation
+## Overview
+Retrieval-augmented generation (RAG) is a hybrid framework that combines the power of retrieval systems with generative language models to enhance their performance on knowledge-intensive tasks. However, its performance heavily depends on the reliability of the retriever and the quality of the knowledge base. In real-world scenarios, imperfections in these components often result in the retrieval of noisy, irrelevant, or misleading information, undermining the overall trustworthiness of RAG systems. To this end, we propose a method called Robust Fine-Tuning (RbFT), which enhances the defensive capabilities of LLMs against retrieval defects through two fine-tuning tasks. Experimental results demonstrate that RbFT significantly enhances the robustness of RAG systems across diverse retrieval conditions, outperforming existing methods while preserving high inference efficiency and compatibility with other robust approaches.
+
+<div align=center>
+  <img src="rbft.png" width=80%>
+</div>
+
+## Requirements
 We implement the training and RAG pipeline based on [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) and [FlashRAG](https://github.com/RUC-NLPIR/FlashRAG) respectively. 
 
 Please install them according to their requirements.
 
+## Reproduce
+
 ### 1. Data Process
 ##### 1.1. Download Dataset 
-We directly adopt the dataset pro-processed by FlashRAG. 
+We directly adopt the dataset provided by FlashRAG. 
 
 Download FlashRAG Datasets from huggingface:
 ```bash
