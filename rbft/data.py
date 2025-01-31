@@ -35,12 +35,12 @@ def format_detect(flags):
     output = ""
                 
     for i, flg in enumerate(flags):
-        output += f'Doc {i + 1}: {'yes' if flg == 'yes' else 'no'}. '
+        output += f'Doc {i + 1}: {flg}. '
         if flg == "yes":
             output += f'Doc {i+1} helps answer the question.'
-        elif flg == 'nsy':
+        elif flg == 'neg':
             output += f'Doc {i+1} is possibly relevant but does not help answer the question.'
-        elif flg == 'irr':
+        elif flg == 'nsy':
             output += f'Doc {i+1} is irrelevant and does not help answer the question.'
         elif flg == 'cf':
             output += f'Doc {i+1} contains incorrect information and does not help answer the question.'
@@ -56,6 +56,7 @@ if __name__ == '__main__':
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--input_path", type=str, default='../data/e5/train/')
     parser.add_argument("--output_file", type=str, default='data/rbft.json')
+    parser.add_argument("--position", type=str, default='random', choices=['random', 'top', 'bottom'])
     parser.add_argument("--topk", type=int, default=5)
     args = parser.parse_args()
     
@@ -70,22 +71,22 @@ if __name__ == '__main__':
             q_list.append(query)
             a_list.append(answer)
             
-    pos_list, attack_list_dict = [], {'cf':[], 'irr':[], 'nsy':[]}
+    pos_list, attack_list_dict = [], {'cf':[], 'neg':[], 'nsy':[]}
     
     with open(f"{args.input_path}/posp.json") as fr:
         for line in fr:
             line = json.loads(line)
             pos_list.append(line['pos_psgs'])
     
+    with open(f"{args.input_path}/negp.json") as fr:
+        for line in fr:
+            line = json.loads(line)
+            attack_list_dict['neg'].append(line['neg_psgs'])
+    
     with open(f"{args.input_path}/nsyp.json") as fr:
         for line in fr:
             line = json.loads(line)
             attack_list_dict['nsy'].append(line['nsy_psgs'])
-    
-    with open(f"{args.input_path}/irrp.json") as fr:
-        for line in fr:
-            line = json.loads(line)
-            attack_list_dict['irr'].append(line['irr_psgs'])
     
     with open(f"{args.input_path}/cfp.json") as fr:
         for line in fr:
@@ -94,20 +95,49 @@ if __name__ == '__main__':
     
     train_data = []
     
-    for attack in ['nsy', 'irr', 'cf', 'mix']:
+    for attack in ['neg', 'nsy', 'cf', 'mix']:
         for tau in [0.2, 0.4, 0.6, 0.8, 1.0]:
             for id, (q, a, pos_psgs) in tqdm(enumerate(zip(q_list, a_list, pos_list))):
                 psgs, flags = [], []
                 
-                sample_value = np.random.rand(min(args.topk, len(pos_psgs)))
-                for i, (pos, v) in enumerate(zip(pos_psgs, sample_value)):
-                    if v <= tau: 
-                        cur_attack = np.random.choice(['nsy', 'irr', 'cf']) if attack == 'mix' else attack
-                        psgs.append(attack_list_dict[cur_attack][id][i])
-                        flags.append(cur_attack)
-                    else: 
-                        psgs.append(pos)
-                        flags.append("yes")
+                if args.position == 'random':
+                    sample_value = np.random.rand(min(args.topk, len(pos_psgs)))
+                    for i, (pos, v) in enumerate(zip(pos_psgs, sample_value)):
+                        if v <= tau: 
+                            cur_attack = np.random.choice(['neg', 'nsy', 'cf']) if attack == 'mix' else attack
+                            psgs.append(attack_list_dict[cur_attack][id][i])
+                            flags.append(cur_attack)
+                        else: 
+                            psgs.append(pos)
+                            flags.append("yes")
+                            
+                            
+                elif args.position == 'top':
+                    pos_psgs = pos_psgs[:args.topk]
+                    attack_top_k = round(tau * len(pos_psgs))
+                    for i, pos in enumerate(pos_psgs):
+                        if i < attack_top_k: # attack
+                            cur_attack = np.random.choice(['neg', 'nsy', 'cf']) if attack == 'mix' else attack
+                            psgs.append(attack_list_dict[cur_attack][id][i])
+                            flags.append(cur_attack)
+                        else: # keep
+                            psgs.append(pos)
+                            flags.append("yes")
+                
+                elif args.position == 'bottom':
+                    pos_psgs = pos_psgs[:args.topk]
+                    keep_top_k = round((1 - tau) * len(pos_psgs))
+                    for i, pos in enumerate(pos_psgs):
+                        if i < keep_top_k: # keep
+                            psgs.append(pos)
+                            flags.append("yes")
+                        else: # attack 
+                            cur_attack = np.random.choice(['neg', 'nsy', 'cf']) if attack == 'mix' else attack
+                            psgs.append(attack_list_dict[cur_attack][id][i])
+                            flags.append(cur_attack)
+
+                else:
+                    raise NotImplementedError
                 
                 input_params = {"question": q, "reference": format_reference(psgs)}
                 qa_data = {

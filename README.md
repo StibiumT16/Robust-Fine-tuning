@@ -47,16 +47,17 @@ Then run:
 ```bash
 bash retrieve.sh
 ```
-All retrieved results (train and eval data of all 3 datasets) will be saved at `data/e5/retrieve_results`
+All retrieved results (train(+dev) and test data of all 3 datasets) will be saved at `data/e5/retrieve_results`
 
 ##### 1.4. Data Sampling
-Sample train/test data and generate noisy/irrelevant retrieval inputs:
+Sample train(+dev)/test data and generate noisy/irrelevant retrieval inputs:
 ```bash
 python data/sample.py \
     --mode test \
     --data_path data/e5/retrieve_results/ \
     --output_path data/e5/test/ \
-    --corpus_file FlashRAG_datasets/retrieval-corpus/wiki18_100w.jsonl
+    --corpus_file FlashRAG_datasets/retrieval-corpus/wiki18_100w.jsonl \
+    --sample_count 1000
 
 python data/sample.py \
     --mode train \
@@ -66,7 +67,7 @@ python data/sample.py \
     --sample_count 20000 
 ```
 
-`sample.json`,`posp.json`,`nsyp.json`,`irrp.json` will be saved at `data/e5/train` and `data/e5/test`
+`sample.json`, `posp.json` (the original retrieval results), `negp.json` (corresponding to the noisy documents in the paper), and `nsyp.json` (corresponding to the irrelevant documents in the paper) will be saved at `data/e5/train` and `data/e5/test`
 
 ##### 1.5. Generate Counterfactual Retrieval Inputs
 ```bash
@@ -81,7 +82,7 @@ python data/data_gen.py \
     --gpu_id 0
 ```
 
-`cfp.json` will be saved at `data/e5/train` and `data/e5/test`
+`cfp.json` (corresponding to the counterfactual documents in the paper) will be saved at `data/e5/train` and `data/e5/test`
 
 ##### 1.6. Directlty Download Our Pre-processed Data
 We also provide our pre-processed data at this [Google Drive Link](https://drive.google.com/drive/folders/1ByebjYy3jRyK2PmGYMpQpxRM5LUXjJ4W?usp=sharing).
@@ -89,6 +90,7 @@ We also provide our pre-processed data at this [Google Drive Link](https://drive
 
 
 ### 2. Run Vanilla RAG
+##### 2.1. Without Defects
 First select the generation model in the config file `configs/eval.yaml` by setting `generator_model`to`llama`or`qwen`
 
 Then you can run the following command to generate and evaluate the outputs:
@@ -100,11 +102,21 @@ python eval/generate.py \
     --gpu_id 0
 ```
 
+The output file `output/vanilla_clean.json` will be like:
+```
+{"result": [0.438, 0.5265171254546356, 0.503, 0.5361430786669944, 0.5536744008714597]}
+{"0": {"query": "Are both Parodia and Thalictrum flowering plants?", "answer": ["yes"], "pred": "Yes"}}
+{"1": {"query": "Which male singer performed together with a female American singer, who was born in 1954 and whose third studio album was named Through His Eyes, have a hit duet with in 1985?", "answer": ["Phil Collins"], "pred": "Phil Collins"}}
+......
+```
+where the first line represents the evaluation results, which by default correspond to the values of ['em', 'f1', 'acc', 'precision', 'recall'] metrics according to the settings in `configs/eval.yaml`. Starting from the second line, each line represents a query text, the corresponding ground truth answer, and the model's output.
+
+##### 2.2. With Defects
 To simulate retrieval defects, you can set the args:
-* passage_attack: `nsy`, `irr`, `cf`, `mix`
-* $0 \leq tau \leq 1$
+* passage_attack: `neg`, `nsy`, `cf`, `mix` (**corresponding to the "noisy",  "irrelevant", "counterfactual", and "mix" mode in the paper, respectively**)
+* $0 \leq tau \leq 1$ is the attack ratio (i.e., the defect replacement probability)
 
-
+For example:
 ```bash
 python eval/generate.py \
     --data_path data/e5/test \
@@ -123,6 +135,7 @@ python data.py
 ```
 
 Then you can train RbFT models and merge the LoRA weights through the LLaMA-Factory toolkit:
+
 Llama:
 ```bash
 FORCE_TORCHRUN=1 CUDA_VISIBLE_DEVICES=0,1,2 llamafactory-cli train train_llama.yaml

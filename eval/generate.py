@@ -11,14 +11,41 @@ def load_data(data_path, args):
         item['psgs'] = positive_psgs[item['qid']][:args.topk]
         
         # Attack
-        sample_value = np.random.rand(len(item['psgs']))
-        for id, v in enumerate(sample_value):
-            if v <= args.tau:
-                cur_attack = np.random.choice(['nsy', 'irr', 'cf']) \
-                    if args.passage_attack == 'mix' \
-                        else args.passage_attack
-                item['psgs'][id] = psgs_dict[cur_attack][item['qid']][id]
-             
+        if args.attack_position == 'random':
+            sample_value = np.random.rand(len(item['psgs']))
+            for id, v in enumerate(sample_value):
+                if v <= args.tau: # random mode 
+                    cur_attack = np.random.choice(['neg', 'nsy', 'cf']) \
+                        if args.passage_attack == 'mix' \
+                            else args.passage_attack
+                    item['psgs'][id] = psgs_dict[cur_attack][item['qid']][id]
+        
+        elif args.attack_position == 'top':
+            attack_topk = round(args.tau * len(item['psgs']))
+            for id in range(len(item['psgs'])):
+                if id < attack_topk: # top mode, only attack top psgs
+                    cur_attack = np.random.choice(['neg', 'nsy', 'cf']) \
+                        if args.passage_attack == 'mix' \
+                            else args.passage_attack
+                    item['psgs'][id] = psgs_dict[cur_attack][item['qid']][id]
+                else: # neglect bottom psgs
+                    break
+        
+        elif args.attack_position == 'bottom':
+            keep_topk = round((1 - args.tau) * len(item['psgs']))
+            for id in range(len(item['psgs'])):
+                if id < keep_topk: # bottom mode, neglect top psgs
+                    continue
+                else: # only attack bottom psgs
+                    cur_attack = np.random.choice(['neg', 'nsy', 'cf']) \
+                        if args.passage_attack == 'mix' \
+                            else args.passage_attack
+                    item['psgs'][id] = psgs_dict[cur_attack][item['qid']][id]
+        
+        else:
+            raise NotImplementedError
+                    
+                    
         return item
         
     dataset = datasets.load_dataset(
@@ -33,18 +60,18 @@ def load_data(data_path, args):
             line = json.loads(line)
             positive_psgs[line['qid']] = line['pos_psgs']
     
-    nsy_psgs, irr_psgs, cf_psgs = {}, {}, {}
+    neg_psgs, nsy_psgs, cf_psgs = {}, {}, {}
+    if args.passage_attack == 'neg' or args.passage_attack == 'mix':
+        with open(data_path + "/negp.json") as fr:
+            for line in fr:
+                line = json.loads(line)
+                neg_psgs[line['qid']] = line['neg_psgs']
+                
     if args.passage_attack == 'nsy' or args.passage_attack == 'mix':
         with open(data_path + "/nsyp.json") as fr:
             for line in fr:
                 line = json.loads(line)
                 nsy_psgs[line['qid']] = line['nsy_psgs']
-                
-    if args.passage_attack == 'irr' or args.passage_attack == 'mix':
-        with open(data_path + "/irrp.json") as fr:
-            for line in fr:
-                line = json.loads(line)
-                irr_psgs[line['qid']] = line['irr_psgs']
                 
     if args.passage_attack == 'cf' or args.passage_attack == 'mix':
         with open(data_path + "/cfp.json") as fr:
@@ -53,8 +80,8 @@ def load_data(data_path, args):
                 cf_psgs[line['qid']] = line['cf_psgs']
     
     psgs_dict = {
+        "neg" : neg_psgs,
         "nsy" : nsy_psgs,
-        "irr" : irr_psgs,
         "cf" : cf_psgs
     }
     
@@ -114,6 +141,7 @@ if __name__ == "__main__":
     parser.add_argument("--tau", type=float, default=0.)
     parser.add_argument("--config_file", type=str, default='configs/eval_config.yaml')
     parser.add_argument("--output_file", type=str, default='output/output.txt')
+    parser.add_argument("--attack_position", type=str, default="random", choices=['random', 'top', 'bottom'])
     parser.add_argument("--passage_attack", type=str, default=None)
     parser.add_argument("--prompt_template", type=str, default=None)
     args = parser.parse_args()

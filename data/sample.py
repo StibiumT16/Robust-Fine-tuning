@@ -14,11 +14,12 @@ def sample_train(args):
         with open(file) as fr:    
             for line in tqdm(fr):
                 line = json.loads(line)
-                query, pos, nsy, answer = line['query'], line['psgs'][:args.k], np.random.choice(line['psgs'][50:], args.k, replace=False).tolist(), line['answer']
+                query, pos, neg, answer = line['query'], line['psgs'][:args.k], np.random.choice(line['psgs'][50:], args.k, replace=False).tolist(), line['answer']
+                #if "yes" in answer or 'no' in answer: continue
                 which_dataset = file.split('/')[-1].split('_')[0]
-                datasets.append((query, pos, nsy, answer, which_dataset))
+                datasets.append((query, pos, neg, answer, which_dataset))
         
-    samples = np.random.choice(len(datasets), args.sample_count, replace=False)
+    samples = np.random.choice(len(datasets), args.sample_count, replace=False) # Train: sample args.sample_count tuples on all datasets
 
     with open(f'{args.output_path}/sample.json', 'w') as fw:
         for qid, sample_id in enumerate(samples):
@@ -32,19 +33,19 @@ def sample_train(args):
             corpus[line['id']] = line['contents']
 
     with open(f'{args.output_path}/posp.json', 'w') as fw_pos, \
-        open(f'{args.output_path}/nsyp.json', 'w') as fw_nsy, \
-        open(f'{args.output_path}/irrp.json', 'w') as fw_irr:
+        open(f'{args.output_path}/negp.json', 'w') as fw_neg, \
+        open(f'{args.output_path}/nsyp.json', 'w') as fw_nsy:
         
         for qid, sample_id in tqdm(enumerate(samples)):
             data = datasets[sample_id]
             
             pos_psgs = [corpus[psg_id] for psg_id in data[1]]
-            nsy_psgs = [corpus[psg_id] for psg_id in data[2]]
-            irr_psgs = [corpus[str(psg_id)] for psg_id in np.random.choice(args.corpus_count, args.k, replace=False)]
+            neg_psgs = [corpus[psg_id] for psg_id in data[2]]
+            nsy_psgs = [corpus[str(psg_id)] for psg_id in np.random.choice(args.corpus_count, args.k, replace=False)]
             
             fw_pos.write(json.dumps({'qid' : qid, 'pos_psgs' : pos_psgs}) + '\n')
+            fw_neg.write(json.dumps({'qid' : qid, 'neg_psgs' : neg_psgs}) + '\n')
             fw_nsy.write(json.dumps({'qid' : qid, 'nsy_psgs' : nsy_psgs}) + '\n')
-            fw_irr.write(json.dumps({'qid' : qid, 'irr_psgs' : irr_psgs}) + '\n')
 
 def sample_test(args):
     dataset_files = [f'{args.data_path}/hotpotqa_eval.json',
@@ -60,12 +61,13 @@ def sample_test(args):
             for line in tqdm(fr):
                 dataset_count += 1
                 line = json.loads(line)
-                query, pos, nsy, answer = line['query'], line['psgs'][:args.k], np.random.choice(line['psgs'][50:], args.k, replace=False).tolist(), line['answer']
+                query, pos, neg, answer = line['query'], line['psgs'][:args.k], np.random.choice(line['psgs'][50:], args.k, replace=False).tolist(), line['answer']
+                if "yes" in answer or 'no' in answer: continue
                 which_dataset = file.split('/')[-1].split('_')[0]
-                dataset.append((query, pos, nsy, answer, which_dataset))
+                dataset.append((query, pos, neg, answer, which_dataset))
                 
         
-        sample_ids = np.random.choice(len(dataset), args.sample_count, replace=False)
+        sample_ids = np.random.choice(len(dataset), args.sample_count, replace=False) # Test: sample args.sample_count tuples on each dataset
         samples.extend(dataset[id] for id in sample_ids)
         
     with open(f'{args.output_path}/sample.json', 'w') as fw:
@@ -79,18 +81,18 @@ def sample_test(args):
             corpus[line['id']] = line['contents']
 
     with open(f'{args.output_path}/posp.json', 'w') as fw_pos, \
-        open(f'{args.output_path}/nsyp.json', 'w') as fw_nsy, \
-        open(f'{args.output_path}/irrp.json', 'w') as fw_irr:
+        open(f'{args.output_path}/negp.json', 'w') as fw_neg, \
+        open(f'{args.output_path}/nsyp.json', 'w') as fw_nsy:
         
         for qid, data in tqdm(enumerate(samples)):
             
             pos_psgs = [corpus[psg_id] for psg_id in data[1]]
-            nsy_psgs = [corpus[psg_id] for psg_id in data[2]]
-            irr_psgs = [corpus[str(psg_id)] for psg_id in np.random.choice(args.corpus_count, args.k, replace=False)]
+            neg_psgs = [corpus[psg_id] for psg_id in data[2]]
+            nsy_psgs = [corpus[str(psg_id)] for psg_id in np.random.choice(args.corpus_count, args.k, replace=False)]
             
             fw_pos.write(json.dumps({'qid' : qid, 'pos_psgs' : pos_psgs}) + '\n')
+            fw_neg.write(json.dumps({'qid' : qid, 'neg_psgs' : neg_psgs}) + '\n')
             fw_nsy.write(json.dumps({'qid' : qid, 'nsy_psgs' : nsy_psgs}) + '\n')
-            fw_irr.write(json.dumps({'qid' : qid, 'irr_psgs' : irr_psgs}) + '\n')
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

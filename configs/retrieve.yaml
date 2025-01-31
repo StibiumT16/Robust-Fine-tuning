@@ -13,6 +13,7 @@ model2pooling:
 method2index:
   e5: "data/indexes/e5_Flat.index"
   contriever: "data/indexes/contriever_Flat.index"
+  bm25: "data/indexes/bm25"
 
 # ------------------------------------------------Environment Settings------------------------------------------------#
 # Directory paths for data and outputs
@@ -36,6 +37,7 @@ index_path: ~ # set automatically if not provided.
 faiss_gpu: True # whether use gpu to hold index
 corpus_path: "FlashRAG_datasets/retrieval-corpus/wiki18_100w.jsonl"  # path to corpus in '.jsonl' format that store the documents
 
+bm25_backend: pyserini
 retrieval_topk: 100 # number of retrieved documents
 retrieval_batch_size: 512  # batch size for retrieval
 retrieval_use_fp16: True  # whether to use fp16 for retrieval model
