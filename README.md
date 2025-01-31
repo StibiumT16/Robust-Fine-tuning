@@ -1,8 +1,10 @@
 # Robust Fine-tuning (RbFT)
-The code of our paper: *Robust Fine-tuning for Retrieval-Augmented Generation against Retrieval Defects*
+The code of our paper: *RbFT: Robust Fine-tuning for Retrieval-Augmented Generation against Retrieval Defects*
 
 ## Overview
-Retrieval-augmented generation (RAG) is a hybrid framework that combines the power of retrieval systems with generative language models to enhance their performance on knowledge-intensive tasks. However, its performance heavily depends on the reliability of the retriever and the quality of the knowledge base. In real-world scenarios, imperfections in these components often result in the retrieval of noisy, irrelevant, or misleading information, undermining the overall trustworthiness of RAG systems. To this end, we propose a method called Robust Fine-Tuning (RbFT), which enhances the defensive capabilities of LLMs against retrieval defects through two fine-tuning tasks. Experimental results demonstrate that RbFT significantly enhances the robustness of RAG systems across diverse retrieval conditions, outperforming existing methods while preserving high inference efficiency and compatibility with other robust approaches.
+Retrieval-augmented generation (RAG) enhances large language models (LLMs) by integrating external knowledge retrieved from a knowledge base. However, its effectiveness is fundamentally constrained by the reliability of both the retriever and the knowledge base. In real-world scenarios, imperfections in these components often lead to the retrieval of noisy, irrelevant, or misleading counterfactual information, ultimately undermining the trustworthiness of RAG systems.
+
+To address this challenge, we propose Robust Fine-Tuning (RbFT), a method designed to enhance the resilience of LLMs against retrieval defects through two targeted fine-tuning tasks. Experimental results demonstrate that RbFT significantly improves the robustness of RAG systems across diverse retrieval conditions, surpassing existing methods while maintaining high inference efficiency and compatibility with other robustness techniques.
 
 <div align=center>
   <img src="rbft.png" width=80%>
