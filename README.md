@@ -83,7 +83,7 @@ python data/data_gen.py \
 
 `cfp.json` will be saved at `data/e5/train` and `data/e5/test`
 
-##### 1.6. Directlty Download Our Pre-processed Data
+##### 1.6. Directly Download Our Pre-processed Data
 We also provide our pre-processed data at this [Google Drive Link](https://drive.google.com/drive/folders/1ByebjYy3jRyK2PmGYMpQpxRM5LUXjJ4W?usp=sharing).
 
 
