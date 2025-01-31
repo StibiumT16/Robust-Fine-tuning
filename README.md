@@ -1,5 +1,5 @@
 # Robust Fine-tuning (RbFT)
-The code of our paper: *RbFT: Robust Fine-tuning for Retrieval-Augmented Generation against Retrieval Defects*
+The code of our paper: [*RbFT: Robust Fine-tuning for Retrieval-Augmented Generation against Retrieval Defects*](https://arxiv.org/abs/2501.18365)
 
 ## Overview
 Retrieval-augmented generation (RAG) enhances large language models (LLMs) by integrating external knowledge retrieved from a knowledge base. However, its effectiveness is fundamentally constrained by the reliability of both the retriever and the knowledge base. In real-world scenarios, imperfections in these components often lead to the retrieval of noisy, irrelevant, or misleading counterfactual information, ultimately undermining the trustworthiness of RAG systems.
